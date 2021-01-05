@@ -1,71 +1,98 @@
-let palette, voronoi;
-let type = 0;
-let changed = true;
-let centers = [];
+let canvX = 400, canvY = 400;
 
-let offX = 100;
-let offY = 100;
+let idCount = 0;
+let palette, voronoi;
+let voronoiType = 1; //0: color; 1: lines
+let menuType = 0; //0: paneMenu; 1: cCMenu
+let changed = true;
+let defCenters = [];
+let centers = [];
+let selCenters = [];
+
+let offX = 0;
+let offY = 0;
+
+let cCNameInput, cCMenu, paneMenu, cCPane, cCName;
 
 function setup() {
-  let maincontainer = createDiv();
-  maincontainer.class('main');
-
-  let canvcontainer = createDiv();
-  canvcontainer.class('container');
-  canvcontainer.parent(maincontainer);
-  
-  let canv = createCanvas(600, 600);
-  canv.parent(canvcontainer);
+  setupHTML();
   
   colorMode(HSB, 100);
-  palette = createImage(400, 400);
-  voronoi = createImage(400, 400);
+  palette = createImage(canvX, canvY);
+  voronoi = createImage(canvX, canvY);
   createPalette();
   colorMode(RGB, 255);
+  
+  createCenters();
 }
 
 
 function draw() {
   background("#e9e9e9");
+  if(changed){
+    if(voronoiType == 0){
+      colorVoronoi();
+    }else{
+      edgeVoronoi();
+    }
+    changed = false;
+  }
   image(palette, offX, offY);
   image(voronoi, offX, offY);
+  
+  let closestCC = "N/A";
   if(centers.length){
-    if(changed){
-      if(type == 0){
-        colorVoronoi();
-      }else{
-        edgeVoronoi();
+    let cursorHand = false;
+    centers.forEach(c => {
+      if(c.mouseWithin(2)){ 
+        cursorHand = true;
       }
-      changed = false;
+      c.saveDistToM();});
+    if(cursorHand){
+      cursor(HAND);
+    }else{
+      cursor(ARROW);
     }
-    centers.forEach(c => {c.show(); c.saveDistToM();});
     centers.sort(function(a, b){
       return a.dstToM - b.dstToM;
     });
-    centers[0].highlight();
-    
+    if(menuType === 0 && pointInRect(mouseX, mouseY, offX, offY, canvX, canvY)){
+      centers[0].highlight();
+      cursor(CROSS);
+      closestCC = centers[0].name;
+    }
+    centers.forEach(c => {c.show();});
+    selCenters.forEach(c => {c.select();});
   }
-  
+  if(menuType === 0 && pointInRect(mouseX, mouseY, offX, offY, canvX, canvY)){
+    let palettecolor = color(palette.get(min(max(mouseX, 0), canvX - 1) ,min(max(mouseY, 0), canvY - 1)));
+    cCPane.style('background-color', palettecolor.toString("rrggbb"));
+    cCName.html(closestCC);
+  }
 }
 
 function colorVoronoi(){
-  voronoi.loadPixels();
-  for(x = 0; x < 400; x++){
-    for(y = 0; y < 400; y++){
-      centers.sort(function(a, b){
-        return a.distTo(x + offX, y + offY) - b.distTo(x + offX, y + offY);
-      });
-      voronoi.set(x,y, centers[0].c);
-    }
-  } 
-  voronoi.updatePixels();
+  if(centers.length){
+    voronoi.loadPixels();
+    for(x = 0; x < canvX; x++){
+      for(y = 0; y < canvY; y++){
+        centers.sort(function(a, b){
+          return a.distTo(x + offX, y + offY) - b.distTo(x + offX, y + offY);
+        });
+        voronoi.set(x,y, centers[0].c);
+      }
+    } 
+    voronoi.updatePixels();
+  }else{
+    clearImage(voronoi);
+  }
 }
 
 function edgeVoronoi(){
   if(centers.length >= 2){
     voronoi.loadPixels();
-    for(x = 0; x < 400; x++){
-      for(y = 0; y < 400; y++){
+    for(x = 0; x < canvX; x++){
+      for(y = 0; y < canvY; y++){
         centers.sort(function(a, b){
           return a.saveDistTo(x + offX, y + offY) - b.saveDistTo(x + offX, y + offY);
         });
@@ -77,13 +104,15 @@ function edgeVoronoi(){
       }
     } 
     voronoi.updatePixels();
+  }else{
+    clearImage(voronoi);
   }
 }
 
 function createPalette(){
   palette.loadPixels();
-  for(let h = 0; h < 400; h++){
-    for(let s = 0; s < 400; s++){
+  for(let h = 0; h < canvX; h++){
+    for(let s = 0; s < canvY; s++){
       palette.set(h, s, color(h/4, s/4, 100));
     }
   }
@@ -91,23 +120,50 @@ function createPalette(){
 }
 
 function mousePressed(){
-  if(mouseX > offX && mouseX < offX + 400 && mouseY > offY && mouseY < offY + 400){ 
+  if(pointInRect(mouseX, mouseY, offX, offY, canvX, canvY)){ 
     let add = true;
+    let selectedCenter = null;
     if(centers.length){
       centers.forEach(c => {
-        if(c.mouseWithin(2)){ add = false; }
+        if(c.mouseWithin(2)){ 
+          add = false; 
+          selectedCenter = c;
+        }
       });
     }
     if(add){
-      centers.push(new colorCenter(mouseX, mouseY, palette.get(mouseX - 100,mouseY - 100)));
+      idCount++; 
+      let newCCenter = new colorCenter(idCount, mouseX, mouseY, palette.get(mouseX - offX,mouseY - offY));
+      centers.push(newCCenter);
+      selCenters = [];
+      selCenters.push(newCCenter);
+      changed = true;
+    }else{
+      let selIdx = selCenters.indexOf(selectedCenter);
+      if(selIdx !== -1){
+        selCenters = [];
+      }else{
+        selCenters = [];
+        selCenters.push(selectedCenter);
+      }
       changed = true;
     }
+  }
+  if(selCenters.length === 1){
+    menuType = 1;
+    paneMenu.class("ccmenu hor hide");
+    cCMenu.class("ccmenu hor unhide");
+    cCNameInput.value(selCenters[0].name);
+  }else{
+    menuType = 0;
+    paneMenu.class("ccmenu hor unhide");
+    cCMenu.class("ccmenu hor hide");
   }
 }
 
 function keyPressed(){
   if(key === 'x'){
-    type = (type == 0) ? 1 : 0;
+    voronoiType = (voronoiType == 0) ? 1 : 0;
     changed = true;
   }
 }

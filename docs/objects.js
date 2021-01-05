@@ -1,6 +1,11 @@
 class colorCenter{
-  constructor(x, y, c){
-    this.name = "Untitled";
+  constructor(id, x, y, c, name = null){
+    this.id = id;
+    if(name !== null){
+      this.name = name;
+    }else{
+      this.name = "Color " + id;
+    }
     this.x = x;
     this.y = y;
     this.c = c;
@@ -10,17 +15,42 @@ class colorCenter{
   }
   
   show(){
-    stroke(0);
-    strokeWeight(1);
-    fill(this.c);
-    text(this.name, this.x+10, this.y);
-    ellipse(this.x,this.y,this.size);
+    let mouseIn = this.mouseWithin(2);
+    push();
+    translate(this.x, this.y);
+    if(mouseIn){
+      fill(255);
+      stroke(0);
+      strokeWeight(2);
+      cursor(HAND);
+      //stroke("#FF0000");
+      //push();
+      //translate(this.x, this.y);
+      //let p = this.size * 0.7;
+      //line(p, p, -p, -p);
+      //line(-p, p, p, -p);
+      //pop();
+    }
+    noStroke(0);
+    fill(0);
+    text(this.name, 15, 0);
+    ellipse(0, 0,this.size);
+    pop();
   }
   
   highlight(){
     noFill();
     stroke(0);
-    ellipse(this.x, this.y, this.size * 2);
+    strokeWeight(1);
+    line(this.x, this.y, mouseX, mouseY);
+    //ellipse(this.x, this.y, this.size*2);
+  }
+  
+  select(){
+    noFill();
+    stroke(0);
+    strokeWeight(2);
+    ellipse(this.x, this.y, this.size*2);
   }
   
   within(x, y){
