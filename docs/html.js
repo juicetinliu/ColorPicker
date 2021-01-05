@@ -14,13 +14,17 @@ function setupHTML(){
   containerTextPanel.class('container vert');
   containerTextPanel.parent(containerSidePanel);
   
-  let text1 = createDiv('Click on canvas to create a new color group.');
+  let text1 = createDiv('Click on canvas to create a new color-group node.');
   text1.class('text');
   text1.parent(containerTextPanel);
   
   let text2 = createDiv('Select existing nodes to modify names/delete.');
   text2.class('text');
   text2.parent(containerTextPanel);
+  
+  let text3 = createDiv('Press \'x\' to toggle between visualizations');
+  text3.class('text');
+  text3.parent(containerTextPanel);
   
   let containerGenPanel = createDiv();
   containerGenPanel.class('container vert');
@@ -34,7 +38,7 @@ function setupHTML(){
   cCPane.class('pane');
   cCPane.parent(paneMenu);
   
-  cCName = createDiv();
+  cCName = createDiv('Hover over canvas!');
   cCName.class('panetext');
   cCName.parent(paneMenu);
   
@@ -47,17 +51,48 @@ function setupHTML(){
   cCNameLabel.parent(cCMenu);
   
   cCNameInput = createInput('');
+  cCNameInput.size(100);
   cCNameInput.parent(cCMenu);
   cCNameInput.input(changeCCName);
   
-  cCDelete = createDiv();
-  cCDelete.class('delbutt');
+  cCDelete = createSpan();
+  cCDelete.class('smallbutts smallicon');
   cCDelete.mousePressed(deletecC);
   cCDelete.parent(cCMenu);
+  cCDelete.attribute('title', "Delete this node");
   
   let cCDeleteIcon = createImg('delete.png', 'Delete node');
   cCDeleteIcon.style('width: 20px');
   cCDeleteIcon.parent(cCDelete);
+  
+  //let containerMiscPanel = createDiv();
+  //containerMiscPanel.class('container vert');
+  //containerMiscPanel.parent(containerSidePanel);
+  
+  miscMenu = createDiv();
+  miscMenu.class('ccmenu hor unhide');
+  miscMenu.parent(containerGenPanel);
+  miscMenu.style('margin-top', '30px');
+  
+  let cCRestoreDef = createSpan();
+  cCRestoreDef.class('butts icon');
+  cCRestoreDef.mousePressed(restoreDefCC);
+  cCRestoreDef.parent(miscMenu);
+  cCRestoreDef.attribute('title', "Restore to default");
+  
+  let cCRestoreIcon = createImg('default.png', 'Restore to default');
+  cCRestoreIcon.style('width: 40px');
+  cCRestoreIcon.parent(cCRestoreDef);
+  
+  let cCDeleteAll = createSpan();
+  cCDeleteAll.class('butts icon');
+  cCDeleteAll.mousePressed(deleteAllCC);
+  cCDeleteAll.parent(miscMenu);
+  cCDeleteAll.attribute('title', "Delete all nodes");
+  
+  let cCDeleteAllIcon = createImg('deleteall.png', 'Delete all nodes');
+  cCDeleteAllIcon.style('width: 40px');
+  cCDeleteAllIcon.parent(cCDeleteAll);
   
   let canv = createCanvas(canvX, canvY);
   canv.parent(canvcontainer);  
@@ -89,6 +124,19 @@ function deletecC(){
   changed = true;
 }
 
+function deleteAllCC(){
+  idCount = 0;
+  centers = [];
+  selCenters = [];
+  changed = true;
+}
+
 function changeCCName(){
   selCenters[0].name = this.value();
+}
+
+function restoreDefCC(){
+  centers = defCenters.slice();
+  selCenters = [];
+  changed = true;
 }

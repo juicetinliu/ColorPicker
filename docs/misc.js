@@ -19,5 +19,5 @@ function createCenters(){
     idCount++; 
     defCenters.push(new colorCenter(idCount, c[1], c[2], palette.get(c[1], c[2]), c[0]));
   });
-  centers = defCenters;
+  centers = defCenters.slice();
 }
